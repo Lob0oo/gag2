@@ -1,0 +1,166 @@
+-- Ensure this runs on the server (Executor environment or Server Script)
+print("Loading Garden Spawner Script via Loadstring...")
+
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+----------------------------------------------------------------
+-- 1. SETUP ASSETS (Creates templates if they don't exist)
+----------------------------------------------------------------
+
+-- Create Spawn Area Part if missing
+local spawnArea = Workspace:FindFirstChild("SpawnArea")
+if not spawnArea then
+	spawnArea = Instance.new("Part")
+	spawnArea.Name = "SpawnArea"
+	spawnArea.Size = Vector3.new(100, 1, 100)
+	spawnArea.Position = Vector3.new(0, 0.5, 0)
+	spawnArea.Transparency = 0.5
+	spawnArea.BrickColor = BrickColor.new("Bright green")
+	spawnArea.CanCollide = false
+	spawnArea.Anchored = true
+	spawnArea.Parent = Workspace
+end
+
+-- Create Seed Template if missing
+local seedTemplate = ReplicatedStorage:FindFirstChild("Seed")
+if not seedTemplate then
+	seedTemplate = Instance.new("Model")
+	seedTemplate.Name = "Seed"
+	
+	local part = Instance.new("Part")
+	part.Name = "PrimaryPart"
+	part.Size = Vector3.new(2, 2, 2)
+	part.Shape = Enum.PartType.Ball
+	part.BrickColor = BrickColor.new("Red reddish")
+	part.Parent = seedTemplate
+	
+	seedTemplate.PrimaryPart = part
+	seedTemplate.Parent = ReplicatedStorage
+end
+
+-- Create Pet Template if missing
+local petTemplate = ReplicatedStorage:FindFirstChild("GardenPet")
+if not petTemplate then
+	petTemplate = Instance.new("Model")
+	petTemplate.Name = "GardenPet"
+	
+	local part = Instance.new("Part")
+	part.Name = "PrimaryPart"
+	part.Size = Vector3.new(2, 2, 2)
+	part.BrickColor = BrickColor.new("Deep blue")
+	part.Parent = petTemplate
+	
+	petTemplate.PrimaryPart = part
+	petTemplate.Parent = ReplicatedStorage
+end
+
+-- Create Pet Spawner Pad if missing
+local petSpawner = Workspace:FindFirstChild("PetSpawner")
+if not petSpawner then
+	petSpawner = Instance.new("Part")
+	petSpawner.Name = "PetSpawner"
+	petSpawner.Size = Vector3.new(6, 0.5, 6)
+	petSpawner.Position = Vector3.new(0, 0.25, -60)
+	petSpawner.BrickColor = BrickColor.new("Cyan")
+	petSpawner.Anchored = true
+	petSpawner.Parent = Workspace
+end
+
+----------------------------------------------------------------
+-- 2. SEED SPAWNER LOGIC
+----------------------------------------------------------------
+local MAX_SEEDS = 15
+local SPAWN_DELAY = 3
+
+local function getRandomPosition()
+	local size = spawnArea.Size
+	local pos = spawnArea.Position
+	local randomX = math.random(-size.X / 2, size.X / 2)
+	local randomZ = math.random(-size.Z / 2, size.Z / 2)
+	return Vector3.new(pos.X + randomX, pos.Y + (size.Y / 2) + 1, pos.Z + randomZ)
+end
+
+-- Run Spawner in background thread
+task.spawn(function()
+	while true do
+		local currentSeeds = Workspace:GetChildren()
+		local seedCount = 0
+		
+		for _, item in ipairs(currentSeeds) do
+			if item.Name == "SpawnedSeed" then
+				seedCount = seedCount + 1
+			end
+		end
+		
+		if seedCount < MAX_SEEDS then
+			local newSeed = seedTemplate:Clone()
+			newSeed.Name = "SpawnedSeed"
+			newSeed:PivotTo(CFrame.new(getRandomPosition()))
+			newSeed.Parent = Workspace
+			
+			newSeed.PrimaryPart.Touched:Connect(function(otherPart)
+				local player = Players:GetPlayerFromCharacter(otherPart.Parent)
+				if player then
+					newSeed:Destroy()
+				end
+			end)
+		end
+		task.wait(SPAWN_DELAY)
+	end
+end)
+
+----------------------------------------------------------------
+-- 3. PET SPAWNER LOGIC
+----------------------------------------------------------------
+local db = false
+petSpawner.Touched:Connect(function(otherPart)
+	local character = otherPart.Parent
+	local player = Players:GetPlayerFromCharacter(character)
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+	
+	if player and humanoidRootPart and not db then
+		db = true
+		
+		if character:FindFirstChild(player.Name .. "s_Pet") then
+			db = false
+			return
+		end
+		
+		local newPet = petTemplate:Clone()
+		newPet.Name = player.Name .. "s_Pet"
+		
+		local petRoot = newPet.PrimaryPart
+		petRoot.CanCollide = false
+		petRoot.Anchored = false
+		newPet:PivotTo(humanoidRootPart.CFrame * CFrame.new(0, 5, 0))
+		newPet.Parent = character
+		
+		local petAttachment = Instance.new("Attachment")
+		petAttachment.Parent = petRoot
+		
+		local playerAttachment = Instance.new("Attachment")
+		playerAttachment.Position = Vector3.new(2, 3, 3) 
+		playerAttachment.Parent = humanoidRootPart
+		
+		local alignPos = Instance.new("AlignPosition")
+		alignPos.MaxForce = 25000
+		alignPos.Responsiveness = 15
+		alignPos.Attachment0 = petAttachment
+		alignPos.Attachment1 = playerAttachment
+		alignPos.Parent = petRoot
+		
+		local alignOrient = Instance.new("AlignOrientation")
+		alignOrient.MaxTorque = 25000
+		alignOrient.Responsiveness = 15
+		alignOrient.Attachment0 = petAttachment
+		alignOrient.Attachment1 = playerAttachment
+		alignOrient.Parent = petRoot
+		
+		task.wait(2)
+		db = false
+	end
+end)
+
+print("Garden Spawner successfully loaded!")
