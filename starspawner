@@ -1,28 +1,20 @@
-print("--- LOADING GAG2 INVENTORY SCRIPT HUB ---")
+print("--- LOADING REAL GAG2 INVENTORY SCRIPT ---")
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local localPlayer = Players.LocalPlayer
 local backpack = localPlayer:WaitForChild("Backpack")
-
--- Fallback to PlayerGui so it works in both Studio and Executors safely
 local targetGui = localPlayer:WaitForChild("PlayerGui")
 
 ----------------------------------------------------------------
--- GAG2 DATA ARRAYS
+-- GAG2 DATA MANIFEST
 ----------------------------------------------------------------
 local GAG2_Seeds = {
-	-- S Tier
 	"Moon Bloom", "Mushroom", "Ghost Pepper", "Venom Spitter", "Dragon's Breath", "Venus Fly Trap", "Poison Apple",
-	-- A Tier
-	"Sunflower", "Poison Ivy", "Pomegranate", "Bamboo",
-	-- B Tier
-	"Glow Mushroom", "Cherry", "Horned Melon", "Acorn", "Dragon Fruit",
-	-- C Tier
-	"Mango", "Tulip", "Baby Cactus", "Cactus", "Corn", "Banana", "Grape",
-	-- D Tier
-	"Tomato", "Strawberry", "Blueberry", "Carrot", "Green Bean", "Pineapple", "Apple"
+	"Sunflower", "Poison Ivy", "Pomegranate", "Bamboo", "Glow Mushroom", "Cherry", "Horned Melon", "Acorn", 
+	"Dragon Fruit", "Mango", "Tulip", "Baby Cactus", "Cactus", "Corn", "Banana", "Grape", "Tomato", 
+	"Strawberry", "Blueberry", "Carrot", "Green Bean", "Pineapple", "Apple"
 }
 
 local GAG2_Pets = {
@@ -30,36 +22,36 @@ local GAG2_Pets = {
 }
 
 ----------------------------------------------------------------
--- INVENTORY ITEM GENERATION (Spawns items directly as tools)
+-- INVENTORY LOGIC (Finds the real game items)
 ----------------------------------------------------------------
-local function giveToolToInventory(itemName, color, isPet)
-	-- Create the Tool Container
-	local newTool = Instance.new("Tool")
-	newTool.Name = itemName
-	newTool.RequiresHandle = true
+local function giveRealGameItem(itemName)
+	-- Look through the entire game's ReplicatedStorage for the tool matching this name
+	local realTool = ReplicatedStorage:FindFirstChild(itemName, true) or game:GetService("Lighting"):FindFirstChild(itemName, true)
 	
-	-- Create the physical handle inside the tool so it can be held
-	local handle = Instance.new("Part")
-	handle.Name = "Handle"
-	handle.Size = Vector3.new(1, 1, 1)
-	handle.BrickColor = BrickColor.new(color)
-	handle.Material = Enum.Material.Plastic
-	handle.Parent = newTool
-	
-	-- Add a special tag if it's a pet, just to distinguish it
-	if isPet then
-		local petTag = Instance.new("StringValue")
-		petTag.Name = "IsPet"
-		petTag.Value = "True"
-		petTag.Parent = newTool
+	if realTool and realTool:IsA("Tool") then
+		-- Clone the actual game item straight into your inventory
+		local clone = realTool:Clone()
+		clone.Parent = backpack
+		print("Successfully added real item to inventory: " .. itemName)
+	else
+		-- Fallback: If the game keeps items elsewhere, look for any folder named 'Tools' or 'Seeds'
+		local found = false
+		for _, desc in ipairs(ReplicatedStorage:GetDescendants()) do
+			if desc:IsA("Tool") and (desc.Name:lower() == itemName:lower() or desc.Name:lower() == (itemName:lower() .. " seed")) then
+				local clone = desc:Clone()
+				clone.Parent = backpack
+				found = true
+				break
+			end
+		end
+		if not found then
+			warn("Could not find the game's official Tool asset for: " .. itemName)
+		end
 	end
-	
-	-- Place the tool directly inside the player's Backpack (Inventory)
-	newTool.Parent = backpack
 end
 
 ----------------------------------------------------------------
--- MODERN INTERFACE UI CREATION
+-- INTERFACE UI (With Open/Close Toggle)
 ----------------------------------------------------------------
 if targetGui:FindFirstChild("GaG2_Hub") then targetGui.GaG2_Hub:Destroy() end
 
@@ -68,7 +60,7 @@ sg.Name = "GaG2_Hub"
 sg.ResetOnSpawn = false
 sg.Parent = targetGui
 
--- Main Panel
+-- Main Panel Frame
 local main = Instance.new("Frame")
 main.Size = UDim2.new(0, 500, 0, 350)
 main.Position = UDim2.new(0.5, -250, 0.5, -175)
@@ -76,8 +68,25 @@ main.BackgroundColor3 = Color3.fromRGB(30, 30, 32)
 main.BorderSizePixel = 0
 main.Active = true
 main.Draggable = true
+main.Visible = true
 main.Parent = sg
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
+
+-- Toggle Button (Stays on screen when menu is closed)
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 100, 0, 35)
+toggleBtn.Position = UDim2.new(0, 10, 0, 10)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 48)
+toggleBtn.Text = "Toggle Menu"
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.Font = Enum.Font.SourceSansBold
+toggleBtn.TextSize = 14
+toggleBtn.Parent = sg
+Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 6)
+
+toggleBtn.MouseButton1Click:Connect(function()
+	main.Visible = not main.Visible
+end)
 
 -- Title
 local title = Instance.new("TextLabel")
@@ -89,18 +98,18 @@ title.TextSize = 18
 title.Font = Enum.Font.SourceSansBold
 title.Parent = main
 
--- Close Button
+-- Minimize Button inside the menu
 local close = Instance.new("TextButton")
 close.Size = UDim2.new(0, 30, 0, 30)
 close.Position = UDim2.new(1, -40, 0, 8)
-close.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-close.Text = "X"
+close.BackgroundColor3 = Color3.fromRGB(60, 60, 65)
+close.Text = "_"
 close.TextColor3 = Color3.fromRGB(255, 255, 255)
 close.Font = Enum.Font.SourceSansBold
 close.TextSize = 14
 close.Parent = main
 Instance.new("UICorner", close).CornerRadius = UDim.new(0, 6)
-close.MouseButton1Click:Connect(function() sg:Destroy() end)
+close.MouseButton1Click:Connect(function() main.Visible = false end)
 
 -- Scrolling Frame for Seeds
 local seedScroll = Instance.new("ScrollingFrame")
@@ -133,7 +142,7 @@ for _, sName in ipairs(GAG2_Seeds) do
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, -10, 0, 30)
 	btn.BackgroundColor3 = Color3.fromRGB(50, 120, 60)
-	btn.Text = "+ " .. sName .. " Seed"
+	btn.Text = "+ Get " .. sName .. " Seed"
 	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	btn.Font = Enum.Font.SourceSans
 	btn.TextSize = 14
@@ -141,7 +150,7 @@ for _, sName in ipairs(GAG2_Seeds) do
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
 	
 	btn.MouseButton1Click:Connect(function() 
-		giveToolToInventory(sName .. " Seed", "Bright orange", false) 
+		giveRealGameItem(sName) 
 	end)
 end
 
@@ -150,7 +159,7 @@ for _, pName in ipairs(GAG2_Pets) do
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, -10, 0, 30)
 	btn.BackgroundColor3 = Color3.fromRGB(50, 90, 150)
-	btn.Text = "+ " .. pName
+	btn.Text = "+ Get " .. pName
 	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	btn.Font = Enum.Font.SourceSans
 	btn.TextSize = 14
@@ -158,8 +167,8 @@ for _, pName in ipairs(GAG2_Pets) do
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
 	
 	btn.MouseButton1Click:Connect(function() 
-		giveToolToInventory(pName, "Bright blue", true) 
+		giveRealGameItem(pName) 
 	end)
 end
 
-print("--- INVENTORY SPAWNER HUB READY ---")
+print("--- INVENTORY HUB LOADED ---")
