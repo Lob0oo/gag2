@@ -1,4 +1,4 @@
-print("--- LOADING TOP-RIGHT TOGGLE GAG2 MENU ---")
+print("--- LOADING PREMIUM GLASSMOPRHISM GAG2 MENU ---")
 
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
@@ -30,122 +30,156 @@ sg.Name = "GaG2_Hub"
 sg.ResetOnSpawn = false
 sg.Parent = targetGui
 
--- Main Panel Frame
+-- Main Panel Frame (Sleek Frosted Glass Appearance)
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 450, 0, 320)
-main.Position = UDim2.new(0.5, -225, 0.5, -160)
-main.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
+main.Size = UDim2.new(0, 480, 0, 340)
+main.Position = UDim2.new(0.5, -240, 0.5, -170)
+main.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+main.BackgroundTransparency = 0.35 -- Semi-transparent glass window look
 main.BorderSizePixel = 0
 main.Active = true
 main.Draggable = true
-main.Visible = true -- Starts open automatically
+main.Visible = true 
 main.Parent = sg
-Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
 
--- Plain Text Toggle Button (Moved to Top Right)
+-- Smooth Corners for Glass Pane
+local mainCorner = Instance.new("UICorner", main)
+mainCorner.CornerRadius = UDim.new(0, 16)
+
+-- Elegant Outer Light Border Reflection
+local mainStroke = Instance.new("UIStroke", main)
+mainStroke.Thickness = 1.5
+mainStroke.Color = Color3.fromRGB(255, 255, 255)
+mainStroke.Transparency = 0.75 -- Subtle white glow line around the frame
+mainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+-- Styled Top-Right Toggle Button (Matches Glass Aesthetic)
 local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0, 80, 0, 35)
--- Positioned safely on the right side below the top bar
-toggleBtn.Position = UDim2.new(1, -100, 0, 50) 
-toggleBtn.BackgroundColor3 = Color3.fromRGB(45, 140, 75)
-toggleBtn.Text = "OPEN"
+toggleBtn.Size = UDim2.new(0, 90, 0, 35)
+toggleBtn.Position = UDim2.new(1, -110, 0, 50) 
+toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 50, 45)
+toggleBtn.BackgroundTransparency = 0.2
+toggleBtn.Text = "MENU"
 toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.Font = Enum.Font.SourceSansBold
-toggleBtn.TextSize = 14
+toggleBtn.Font = Enum.Font.Goblin -- Modern uppercase font styling
+toggleBtn.TextSize = 13
 toggleBtn.BorderSizePixel = 0
 toggleBtn.Parent = sg
 
 local btnCorner = Instance.new("UICorner", toggleBtn)
-btnCorner.CornerRadius = UDim.new(0, 6)
+btnCorner.CornerRadius = UDim.new(0, 8)
 
--- Toggle click logic
+local btnStroke = Instance.new("UIStroke", toggleBtn)
+btnStroke.Thickness = 1
+btnStroke.Color = Color3.fromRGB(255, 255, 255)
+btnStroke.Transparency = 0.8
+
 toggleBtn.MouseButton1Click:Connect(function()
 	main.Visible = not main.Visible
 end)
 
--- Title
+-- Header Title Styling
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 45)
+title.Size = UDim2.new(1, 0, 0, 50)
 title.BackgroundTransparency = 1
-title.Text = "Grow a Garden 2 Menu"
+title.Text = "GROW A GARDEN 2"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextSize = 16
-title.Font = Enum.Font.SourceSansBold
+title.TextSize = 15
+title.Font = Enum.Font.Goblin
+title.TextXAlignment = Enum.TextXAlignment.Center
 title.Parent = main
 
--- Minimize Button inside the menu
+-- Minimalist Close/Minimize Indicator
 local close = Instance.new("TextButton")
-close.Size = UDim2.new(0, 30, 0, 30)
-close.Position = UDim2.new(1, -40, 0, 8)
-close.BackgroundColor3 = Color3.fromRGB(55, 55, 60)
-close.Text = "_"
-close.TextColor3 = Color3.fromRGB(255, 255, 255)
+close.Size = UDim2.new(0, 24, 0, 24)
+close.Position = UDim2.new(1, -34, 0, 13)
+close.BackgroundTransparency = 1
+close.Text = "—"
+close.TextColor3 = Color3.fromRGB(200, 200, 200)
 close.Font = Enum.Font.SourceSansBold
 close.TextSize = 14
 close.Parent = main
-Instance.new("UICorner", close).CornerRadius = UDim.new(0, 6)
+
 close.MouseButton1Click:Connect(function() 
 	main.Visible = false 
 end)
 
--- Scrolling Frame for Seeds
+-- Scrolling Panel for Seeds
 local seedScroll = Instance.new("ScrollingFrame")
-seedScroll.Size = UDim2.new(0, 200, 0, 250)
-seedScroll.Position = UDim2.new(0, 15, 0, 55)
-seedScroll.BackgroundTransparency = 0.9
+seedScroll.Size = UDim2.new(0, 215, 0, 255)
+seedScroll.Position = UDim2.new(0, 15, 0, 60)
+seedScroll.BackgroundTransparency = 0.95
 seedScroll.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-seedScroll.CanvasSize = UDim2.new(0, 0, 0, #GAG2_Seeds * 35)
-seedScroll.ScrollBarThickness = 4
+seedScroll.BorderSizePixel = 0
+seedScroll.CanvasSize = UDim2.new(0, 0, 0, #GAG2_Seeds * 36)
+seedScroll.ScrollBarThickness = 2
+seedScroll.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
 seedScroll.Parent = main
 
 local seedLayout = Instance.new("UIListLayout", seedScroll)
-seedLayout.Padding = UDim.new(0, 5)
+seedLayout.Padding = UDim.new(0, 6)
 
--- Scrolling Frame for Pets
+-- Scrolling Panel for Pets
 local petScroll = Instance.new("ScrollingFrame")
-petScroll.Size = UDim2.new(0, 200, 0, 250)
-petScroll.Position = UDim2.new(0, 230, 0, 55)
-petScroll.BackgroundTransparency = 0.9
+petScroll.Size = UDim2.new(0, 215, 0, 255)
+petScroll.Position = UDim2.new(0, 250, 0, 60)
+petScroll.BackgroundTransparency = 0.95
 petScroll.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-petScroll.CanvasSize = UDim2.new(0, 0, 0, #GAG2_Pets * 35)
-petScroll.ScrollBarThickness = 4
+petScroll.BorderSizePixel = 0
+petScroll.CanvasSize = UDim2.new(0, 0, 0, #GAG2_Pets * 36)
+petScroll.ScrollBarThickness = 2
+petScroll.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
 petScroll.Parent = main
 
 local petLayout = Instance.new("UIListLayout", petScroll)
-petLayout.Padding = UDim.new(0, 5)
+petLayout.Padding = UDim.new(0, 6)
 
--- Populate Seeds
+-- Design Generator for Frosted Glass Buttons
+local function createGlassButton(name, parentFrame, defaultColor)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -6, 0, 30)
+	btn.BackgroundColor3 = defaultColor
+	btn.BackgroundTransparency = 0.45 -- Transparent glass button style
+	btn.Text = name
+	btn.TextColor3 = Color3.fromRGB(240, 240, 240)
+	btn.Font = Enum.Font.SourceSansSemibold
+	btn.TextSize = 14
+	btn.BorderSizePixel = 0
+	btn.Parent = parentFrame
+	
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	
+	local stroke = Instance.new("UIStroke", btn)
+	stroke.Thickness = 1
+	stroke.Color = Color3.fromRGB(255, 255, 255)
+	stroke.Transparency = 0.85
+	
+	-- Subtle Hover Effects
+	btn.MouseEnter:Connect(function()
+		btn.BackgroundTransparency = 0.25
+		stroke.Transparency = 0.6
+	end)
+	btn.MouseLeave:Connect(function()
+		btn.BackgroundTransparency = 0.45
+		stroke.Transparency = 0.85
+	end)
+	
+	return btn
+end
+
+-- Populating items with customized translucent tones
 for _, sName in ipairs(GAG2_Seeds) do
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(1, -10, 0, 30)
-	btn.BackgroundColor3 = Color3.fromRGB(60, 130, 70)
-	btn.Text = sName
-	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	btn.Font = Enum.Font.SourceSans
-	btn.TextSize = 14
-	btn.Parent = seedScroll
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-	
-	btn.MouseButton1Click:Connect(function() 
-		print("Selected Seed: " .. sName)
+	local seedBtn = createGlassButton(sName, seedScroll, Color3.fromRGB(35, 80, 45))
+	seedBtn.MouseButton1Click:Connect(function() 
+		print("Clicked seed: " .. sName)
 	end)
 end
 
--- Populate Pets
 for _, pName in ipairs(GAG2_Pets) do
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(1, -10, 0, 30)
-	btn.BackgroundColor3 = Color3.fromRGB(60, 100, 160)
-	btn.Text = pName
-	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	btn.Font = Enum.Font.SourceSans
-	btn.TextSize = 14
-	btn.Parent = petScroll
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-	
-	btn.MouseButton1Click:Connect(function() 
-		print("Selected Pet: " .. pName)
+	local petBtn = createGlassButton(pName, petScroll, Color3.fromRGB(35, 55, 90))
+	petBtn.MouseButton1Click:Connect(function() 
+		print("Clicked pet: " .. pName)
 	end)
 end
 
-print("--- NEW HUB WITH TOP-RIGHT TOGGLE LOADED ---")
+print("--- PREMIUM MENU INTEGRATED ---")
