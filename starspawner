@@ -1,15 +1,14 @@
+print("--- LOADING ADVANCED VISUAL GAG2 REPLICA ---")
+
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local localPlayer = Players.LocalPlayer
 local targetGui = localPlayer:WaitForChild("PlayerGui")
 local backpack = localPlayer:WaitForChild("Backpack")
 
 ----------------------------------------------------------------
--- DATA CONFIGURATION WITH VISUAL IMAGES
+-- DATA CONFIGURATION
 ----------------------------------------------------------------
--- Standard seed icon used as a fallback placeholder image
-local DEFAULT_SEED_IMAGE = "rbxassetid://13401569424" 
-local DEFAULT_PET_IMAGE = "rbxassetid://13401575222"
-
 local GAG2_Seeds = {
 	"Moon Bloom", "Mushroom", "Ghost Pepper", "Venom Spitter", "Dragon's Breath", "Venus Fly Trap", "Poison Apple",
 	"Sunflower", "Poison Ivy", "Pomegranate", "Bamboo", "Glow Mushroom", "Cherry", "Horned Melon", "Acorn", 
@@ -21,65 +20,61 @@ local GAG2_Pets = {
 	"Ice Serpent", "Raccoon", "Black Dragon", "Golden Dragonfly", "Unicorn", "Monkey", "Bear", "Bee", "Robin", "Deer", "Owl", "Bunny", "Frog"
 }
 
-----------------------------------------------------------------
--- CLIENT-SIDE TRACKING & STACKING SPAWN LOGIC
-----------------------------------------------------------------
-local itemStacks = {}
+-- Local counter table to handle the stacking display text
+local playerStacks = {}
 
-local function spawnVisualTool(baseName, isPet)
-	local color = isPet and "Bright blue" or "Bright green"
-	local imageId = isPet and DEFAULT_PET_IMAGE or DEFAULT_SEED_IMAGE
-	local displayName = isPet and baseName or (baseName .. " Seed")
+----------------------------------------------------------------
+-- REALISTIC VISUAL GENERATION LOGIC
+----------------------------------------------------------------
+local function spawnPerfectVisualItem(baseName, isPet)
+	local searchName = isPet and baseName or (baseName .. " Seed")
 	
-	-- Check if the player is already holding the item or if it's in the backpack
-	local character = localPlayer.Character
-	local existingTool = backpack:FindFirstChild(baseName) or (character and character:FindFirstChild(baseName))
+	-- 1. Try to find the REAL game item in storage to steal its 3D model and Image
+	local realGameTool = ReplicatedStorage:FindFirstChild(searchName, true) or game:GetService("Lighting"):FindFirstChild(searchName, true)
 	
-	if existingTool then
-		-- Update internal stack count
-		itemStacks[baseName] = (itemStacks[baseName] or 1) + 1
-		existingTool.Name = displayName .. " x" .. itemStacks[baseName]
-		print("Stacked item: " .. baseName .. " (Total: " .. itemStacks[baseName] .. ")")
+	-- Check if we already have this item in our inventory to handle stacking
+	local currentCharacter = localPlayer.Character
+	local existingInventoryItem = backpack:FindFirstChild(baseName) or (currentCharacter and currentCharacter:FindFirstChild(baseName))
+	
+	if existingInventoryItem then
+		-- Item already exists, increase stack number and change the hotbar text
+		playerStacks[baseName] = (playerStacks[baseName] or 1) + 1
+		existingInventoryItem.Name = searchName .. " x" .. playerStacks[baseName]
+		return
+	end
+	
+	-- First time spawning this item in this session
+	playerStacks[baseName] = 1
+	local visualTool
+	
+	if realGameTool and realGameTool:IsA("Tool") then
+		-- Excellent! We found the real model and texture from the game files. Clone it locally.
+		visualTool = realGameTool:Clone()
+		visualTool.Name = baseName -- Keep the identifier clean for stacking checks
 	else
-		-- Initialize stack tracking
-		itemStacks[baseName] = 1
-		
-		-- Create a new tool instance locally
-		local visualTool = Instance.new("Tool")
-		visualTool.Name = displayName
+		-- Fallback: If the game hides assets securely, build a custom tool container
+		visualTool = Instance.new("Tool")
+		visualTool.Name = baseName
 		visualTool.RequiresHandle = true
 		
-		-- Hidden property configuration to apply the hotbar icon image
-		local textureValue = Instance.new("StringValue")
-		textureValue.Name = "TextureId"
-		textureValue.Value = imageId
-		textureValue.Parent = visualTool
+		-- Use universal fallback asset IDs for seeds and pets
+		local fallbackImage = isPet and "rbxassetid://13401575222" or "rbxassetid://13401569424"
+		visualTool.TextureId = fallbackImage
 		
-		-- Standard fallback for newer UI layouts
-		visualTool.TextureId = imageId
-		
-		-- Create a physical handle part so the tool can register in the slot
 		local handle = Instance.new("Part")
 		handle.Name = "Handle"
-		handle.Size = Vector3.new(1, 1, 1)
-		handle.BrickColor = BrickColor.new(color)
-		handle.Material = Enum.Material.Glass
+		handle.Size = Vector3.new(0.6, 0.6, 0.6)
+		handle.BrickColor = isPet and BrickColor.new("Bright blue") or BrickColor.new("Bright green")
+		handle.Material = Enum.Material.SmoothPlastic
 		handle.Parent = visualTool
-		
-		-- Store the raw base name internally to allow continued stacking identification
-		local identity = Instance.new("StringValue")
-		identity.Name = "Identity"
-		identity.Value = baseName
-		identity.Parent = visualTool
-		
-		-- Parent directly to the client's backpack storage bar
-		visualTool.Parent = backpack
-		print("Spawned visual item with image: " .. displayName)
 	end
+	
+	-- Put the textured, modeled item directly on your client hotbar
+	visualTool.Parent = backpack
 end
 
 ----------------------------------------------------------------
--- MODERN GLASS UI FRAMEWORK
+-- GLASS UI INTERFACE FRAMEWORK
 ----------------------------------------------------------------
 if targetGui:FindFirstChild("GaG2_Hub") then 
 	targetGui.GaG2_Hub:Destroy() 
@@ -108,7 +103,7 @@ mainStroke.Thickness = 1.2
 mainStroke.Color = Color3.fromRGB(255, 255, 255)
 mainStroke.Transparency = 0.75
 
--- Open/Close Interface Controller (Top Right)
+-- Pinned Top-Right Open/Close Toggle
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0, 80, 0, 35)
 toggleBtn.Position = UDim2.new(1, -100, 0, 50) 
@@ -123,7 +118,7 @@ toggleBtn.Parent = sg
 Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 8)
 toggleBtn.MouseButton1Click:Connect(function() main.Visible = not main.Visible end)
 
--- Scrolling Framework Setup
+-- Scrolling Lists Setup
 local function createScroll(position)
 	local scroll = Instance.new("ScrollingFrame")
 	scroll.Size = UDim2.new(0, 200, 0, 250)
@@ -145,7 +140,7 @@ local petScroll = createScroll(UDim2.new(0, 230, 0, 55))
 seedScroll.CanvasSize = UDim2.new(0, 0, 0, #GAG2_Seeds * 35)
 petScroll.CanvasSize = UDim2.new(0, 0, 0, #GAG2_Pets * 35)
 
--- Button Component Builder
+-- Smooth Glass Button Generator
 local function createGlassButton(name, parentFrame, accentColor, clickCallback)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, -6, 0, 30)
@@ -161,15 +156,15 @@ local function createGlassButton(name, parentFrame, accentColor, clickCallback)
 	btn.MouseButton1Click:Connect(clickCallback)
 end
 
--- Populate Buttons
+-- Render Lists
 for _, sName in ipairs(GAG2_Seeds) do
 	createGlassButton(sName, seedScroll, Color3.fromRGB(40, 110, 65), function()
-		spawnVisualTool(sName, false)
+		spawnPerfectVisualItem(sName, false)
 	end)
 end
 
 for _, pName in ipairs(GAG2_Pets) do
 	createGlassButton(pName, petScroll, Color3.fromRGB(40, 75, 130), function()
-		spawnVisualTool(pName, true)
+		spawnPerfectVisualItem(pName, true)
 	end)
 end
