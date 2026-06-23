@@ -126,4 +126,47 @@ seedLayout.Padding = UDim.new(0, 5)
 local petScroll = Instance.new("ScrollingFrame")
 petScroll.Size = UDim2.new(0, 200, 0, 250)
 petScroll.Position = UDim2.new(0, 230, 0, 55)
-petScroll.Background
+petScroll.BackgroundTransparency = 0.9
+petScroll.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+petScroll.CanvasSize = UDim2.new(0, 0, 0, #GAG2_Pets * 35)
+petScroll.ScrollBarThickness = 4
+petScroll.Parent = main
+
+local petLayout = Instance.new("UIListLayout", petScroll)
+petLayout.Padding = UDim.new(0, 5)
+
+-- Populate Seeds
+for _, sName in ipairs(GAG2_Seeds) do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -10, 0, 30)
+	btn.BackgroundColor3 = Color3.fromRGB(60, 130, 70)
+	btn.Text = sName
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Font = Enum.Font.SourceSans
+	btn.TextSize = 14
+	btn.Parent = seedScroll
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+	
+	btn.MouseButton1Click:Connect(function() 
+		giveRealGameItem(sName) 
+	end)
+end
+
+-- Populate Pets
+for _, pName in ipairs(GAG2_Pets) do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -10, 0, 30)
+	btn.BackgroundColor3 = Color3.fromRGB(60, 100, 160)
+	btn.Text = pName
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Font = Enum.Font.SourceSans
+	btn.TextSize = 14
+	btn.Parent = petScroll
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+	
+	btn.MouseButton1Click:Connect(function() 
+		giveRealGameItem(pName) 
+	end)
+end
+
+print("--- HUB LOADED ---")
