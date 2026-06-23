@@ -1,158 +1,166 @@
-print("--- STARTING GARDEN SPAWNER ---")
+print("--- LOADING GARDEN MENU SCRIPT ---")
 
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
--- Get the player executing the script
-local localPlayer = Players.LocalPlayer or Players:GetPlayers()[1]
-if not localPlayer then 
-    warn("No player found to spawn items near!")
-    return 
-end
-
+local localPlayer = Players.LocalPlayer
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
 local rootPart = character:WaitForChild("HumanoidRootPart")
 
--- Create a visual notification in the corner of your screen so you KNOW it ran
-pcall(function()
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Garden Script",
-        Text = "Script Loaded Successfully!",
-        Duration = 5
-    })
+----------------------------------------------------------------
+-- OPTIONAL: SETUP TEMPLATES IF THEY DON'T EXIST IN THE GAME
+----------------------------------------------------------------
+local function createTemplate(name, color, shape)
+    local template = ReplicatedStorage:FindFirstChild(name)
+    if not template then
+        template = Instance.new("Model")
+        template.Name = name
+        local part = Instance.new("Part")
+        part.Name = "PrimaryPart"
+        part.Size = Vector3.new(2, 2, 2)
+        part.Shape = shape or Enum.PartType.Block
+        part.BrickColor = BrickColor.new(color)
+        part.Parent = template
+        template.PrimaryPart = part
+        template.Parent = ReplicatedStorage
+    end
+    return template
+end
+
+local appleSeed = createTemplate("AppleSeed", "Bright red", Enum.PartType.Ball)
+local carrotSeed = createTemplate("CarrotSeed", "Deep orange", Enum.PartType.Cylinder)
+local melonSeed = createTemplate("MelonSeed", "Dark green", Enum.PartType.Ball)
+local petTemplate = createTemplate("GardenPet", "Bright blue", Enum.PartType.Block)
+
+----------------------------------------------------------------
+-- SPAWN FUNCTIONS
+----------------------------------------------------------------
+local function spawnSeedNearPlayer(seedName)
+    local template = ReplicatedStorage:FindFirstChild(seedName)
+    if template then
+        local newSeed = template:Clone()
+        newSeed.Name = "Spawned_" .. seedName
+        
+        -- Spawn 5 studs in front of the player
+        local spawnPos = rootPart.Position + (rootPart.CFrame.LookVector * 5) + Vector3.new(0, 1, 0)
+        newSeed:PivotTo(CFrame.new(spawnPos))
+        newSeed.Parent = Workspace
+        
+        -- Basic pickup logic
+        newSeed.PrimaryPart.Touched:Connect(function(otherPart)
+            if Players:GetPlayerFromCharacter(otherPart.Parent) == localPlayer then
+                newSeed:Destroy()
+            end
+        end)
+    end
+end
+
+local function spawnPet()
+    if character:FindFirstChild(localPlayer.Name .. "_MenuPet") then return end
+    
+    local newPet = petTemplate:Clone()
+    newPet.Name = localPlayer.Name .. "_MenuPet"
+    local petRoot = newPet.PrimaryPart
+    petRoot.CanCollide = false
+    petRoot.Anchored = false
+    newPet:PivotTo(rootPart.CFrame * CFrame.new(0, 5, 0))
+    newPet.Parent = character
+    
+    local petAttachment = Instance.new("Attachment", petRoot)
+    local playerAttachment = Instance.new("Attachment", rootPart)
+    playerAttachment.Position = Vector3.new(2, 3, 2)
+    
+    local alignPos = Instance.new("AlignPosition", petRoot)
+    alignPos.MaxForce = 25000
+    alignPos.Responsiveness = 15
+    alignPos.Attachment0 = petAttachment
+    alignPos.Attachment1 = playerAttachment
+    
+    local alignOrient = Instance.new("AlignOrientation", petRoot)
+    alignOrient.MaxTorque = 25000
+    alignOrient.Responsiveness = 15
+    alignOrient.Attachment0 = petAttachment
+    alignOrient.Attachment1 = playerAttachment
+end
+
+----------------------------------------------------------------
+-- GUI CREATION
+----------------------------------------------------------------
+-- Remove existing menu if it was run before
+if CoreGui:FindFirstChild("GardenMenuGui") then
+    CoreGui.GardenMenuGui:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GardenMenuGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = CoreGui
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 250, 0, 320)
+mainFrame.Position = UDim2.new(0.5, -125, 0.5, -160)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true -- Allows you to move the menu around your screen
+mainFrame.Parent = screenGui
+
+local uiCorner = Instance.new("UICorner", mainFrame)
+uiCorner.CornerRadius = UDim.new(0, 10)
+
+-- Title
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 40)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "Garden Spawner Menu"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.Parent = mainFrame
+
+-- Helper function to make buttons quickly
+local function createMenuButton(text, position, color, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 210, 0, 40)
+    button.Position = position
+    button.BackgroundColor3 = color
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 16
+    button.Font = Enum.Font.SourceSansBold
+    button.BorderSizePixel = 0
+    button.Parent = mainFrame
+    
+    local btnCorner = Instance.new("UICorner", button)
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    
+    button.MouseButton1Click:Connect(callback)
+end
+
+-- Create the Spawner Buttons
+createMenuButton("Spawn Apple Seed", UDim2.new(0, 20, 0, 60), Color3.fromRGB(215, 60, 60), function()
+    spawnSeedNearPlayer("AppleSeed")
 end)
 
-----------------------------------------------------------------
--- SETUP ASSETS (Spawns them right at your character's feet)
-----------------------------------------------------------------
-
--- 1. Spawn Area (The seed field)
-local spawnArea = Workspace:FindFirstChild("SpawnArea")
-if not spawnArea then
-	spawnArea = Instance.new("Part")
-	spawnArea.Name = "SpawnArea"
-	spawnArea.Size = Vector3.new(30, 1, 30)
-	-- Spawns exactly where you are standing
-	spawnArea.Position = rootPart.Position + Vector3.new(0, -2, 0)
-	spawnArea.Transparency = 0.3
-	spawnArea.BrickColor = BrickColor.new("Bright green")
-	spawnArea.CanCollide = true
-	spawnArea.Anchored = true
-	spawnArea.Parent = Workspace
-end
-
--- 2. Seed Template
-local seedTemplate = ReplicatedStorage:FindFirstChild("Seed")
-if not seedTemplate then
-	seedTemplate = Instance.new("Model")
-	seedTemplate.Name = "Seed"
-	local part = Instance.new("Part")
-	part.Name = "PrimaryPart"
-	part.Size = Vector3.new(2, 2, 2)
-	part.Shape = Enum.PartType.Ball
-	part.BrickColor = BrickColor.new("Red reddish")
-	part.Parent = seedTemplate
-	seedTemplate.PrimaryPart = part
-	seedTemplate.Parent = ReplicatedStorage
-end
-
--- 3. Pet Template
-local petTemplate = ReplicatedStorage:FindFirstChild("GardenPet")
-if not petTemplate then
-	petTemplate = Instance.new("Model")
-	petTemplate.Name = "GardenPet"
-	local part = Instance.new("Part")
-	part.Name = "PrimaryPart"
-	part.Size = Vector3.new(2, 2, 2)
-	part.BrickColor = BrickColor.new("Deep blue")
-	part.Parent = petTemplate
-	petTemplate.PrimaryPart = part
-	petTemplate.Parent = ReplicatedStorage
-end
-
--- 4. Pet Spawner Pad
-local petSpawner = Workspace:FindFirstChild("PetSpawner")
-if not petSpawner then
-	petSpawner = Instance.new("Part")
-	petSpawner.Name = "PetSpawner"
-	petSpawner.Size = Vector3.new(6, 0.5, 6)
-	-- Spawns 10 studs in front of you
-	petSpawner.Position = rootPart.Position + (rootPart.CFrame.LookVector * 10)
-	petSpawner.BrickColor = BrickColor.new("Cyan")
-	petSpawner.Anchored = true
-	petSpawner.Parent = Workspace
-end
-
-----------------------------------------------------------------
--- LOOPS & LOGIC
-----------------------------------------------------------------
-local MAX_SEEDS = 10
-local function getRandomPosition()
-	local size = spawnArea.Size
-	local pos = spawnArea.Position
-	local randomX = math.random(-size.X / 2, size.X / 2)
-	local randomZ = math.random(-size.Z / 2, size.Z / 2)
-	return Vector3.new(pos.X + randomX, pos.Y + 2, pos.Z + randomZ)
-end
-
--- Seed Spawner Loop
-task.spawn(function()
-	while true do
-		local seedCount = 0
-		for _, item in ipairs(Workspace:GetChildren()) do
-			if item.Name == "SpawnedSeed" then seedCount = seedCount + 1 end
-		end
-		
-		if seedCount < MAX_SEEDS then
-			local newSeed = seedTemplate:Clone()
-			newSeed.Name = "SpawnedSeed"
-			newSeed:PivotTo(CFrame.new(getRandomPosition()))
-			newSeed.Parent = Workspace
-			
-			newSeed.PrimaryPart.Touched:Connect(function(otherPart)
-				local player = Players:GetPlayerFromCharacter(otherPart.Parent)
-				if player then newSeed:Destroy() end
-			end)
-		end
-		task.wait(2)
-	end
+createMenuButton("Spawn Carrot Seed", UDim2.new(0, 20, 0, 110), Color3.fromRGB(230, 125, 35), function()
+    spawnSeedNearPlayer("CarrotSeed")
 end)
 
--- Pet Spawner Logic
-local db = false
-petSpawner.Touched:Connect(function(otherPart)
-	local char = otherPart.Parent
-	local player = Players:GetPlayerFromCharacter(char)
-	local humRoot = char:FindFirstChild("HumanoidRootPart")
-	
-	if player and humRoot and not db then
-		db = true
-		if char:FindFirstChild(player.Name .. "s_Pet") then db = false; return end
-		
-		local newPet = petTemplate:Clone()
-		newPet.Name = player.Name .. "s_Pet"
-		local petRoot = newPet.PrimaryPart
-		petRoot.CanCollide = false
-		petRoot.Anchored = false
-		newPet:PivotTo(humRoot.CFrame * CFrame.new(0, 5, 0))
-		newPet.Parent = char
-		
-		local petAttachment = Instance.new("Attachment", petRoot)
-		local playerAttachment = Instance.new("Attachment", humRoot)
-		playerAttachment.Position = Vector3.new(2, 3, 3) 
-		
-		local alignPos = Instance.new("AlignPosition", petRoot)
-		alignPos.MaxForce = 25000; alignPos.Responsiveness = 15
-		alignPos.Attachment0 = petAttachment; alignPos.Attachment1 = playerAttachment
-		
-		local alignOrient = Instance.new("AlignOrientation", petRoot)
-		alignOrient.MaxTorque = 25000; alignOrient.Responsiveness = 15
-		alignOrient.Attachment0 = petAttachment; alignOrient.Attachment1 = playerAttachment
-		
-		task.wait(2)
-		db = false
-	end
+createMenuButton("Spawn Melon Seed", UDim2.new(0, 20, 0, 160), Color3.fromRGB(45, 140, 75), function()
+    spawnSeedNearPlayer("MelonSeed")
 end)
 
-print("--- GARDEN SPAWNER LOADED ---")
+createMenuButton("Spawn Companion Pet", UDim2.new(0, 20, 0, 210), Color3.fromRGB(50, 115, 220), function()
+    spawnPet()
+end)
+
+-- Close Button
+createMenuButton("Close Menu", UDim2.new(0, 20, 0, 265), Color3.fromRGB(80, 80, 80), function()
+    screenGui:Destroy()
+end)
+
+print("--- MENU LOADED SUCCESSFULLY ---")
