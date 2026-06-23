@@ -1,4 +1,4 @@
-print("--- LOADING FIXED GAG2 MENU ---")
+print("--- LOADING GUARANTEED VISIBLE GAG2 MENU ---")
 
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
@@ -21,7 +21,6 @@ local GAG2_Pets = {
 ----------------------------------------------------------------
 -- INTERFACE UI CREATION
 ----------------------------------------------------------------
--- Clean up any old menus to prevent overlapping
 if targetGui:FindFirstChild("GaG2_Hub") then 
 	targetGui.GaG2_Hub:Destroy() 
 end
@@ -39,24 +38,24 @@ main.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
 main.BorderSizePixel = 0
 main.Active = true
 main.Draggable = true
-main.Visible = true -- Starts open
+main.Visible = true -- Starts open automatically
 main.Parent = sg
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
 
--- Logo Toggle Button (Circular Image Button)
-local logoBtn = Instance.new("ImageButton")
-logoBtn.Size = UDim2.new(0, 60, 0, 60)
-logoBtn.Position = UDim2.new(0, 15, 0, 15)
-logoBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 48)
--- You can replace this Asset ID with any Roblox image icon you like
-logoBtn.Image = "rbxassetid://6034287515" 
-logoBtn.Parent = sg
+-- Text-Based Toggle Button (Guaranteed to show up)
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 55, 0, 55)
+toggleBtn.Position = UDim2.new(0, 20, 0, 20)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(45, 140, 75) -- Plant green color
+toggleBtn.Text = "🌱" -- Using a universal emoji instead of an image ID
+toggleBtn.TextSize = 28
+toggleBtn.Parent = sg
 
-local logoCorner = Instance.new("UICorner", logoBtn)
-logoCorner.CornerRadius = UDim.new(1, 0) -- Makes it a circle
+local logoCorner = Instance.new("UICorner", toggleBtn)
+logoCorner.CornerRadius = UDim.new(1, 0) -- Perfect circle
 
--- Smooth toggle functionality
-logoBtn.MouseButton1Click:Connect(function()
+-- Toggle click logic
+toggleBtn.MouseButton1Click:Connect(function()
 	main.Visible = not main.Visible
 end)
 
@@ -70,7 +69,7 @@ title.TextSize = 16
 title.Font = Enum.Font.SourceSansBold
 title.Parent = main
 
--- Minimize Button inside the menu
+-- Minimize Button
 local close = Instance.new("TextButton")
 close.Size = UDim2.new(0, 30, 0, 30)
 close.Position = UDim2.new(1, -40, 0, 8)
@@ -103,4 +102,46 @@ local petScroll = Instance.new("ScrollingFrame")
 petScroll.Size = UDim2.new(0, 200, 0, 250)
 petScroll.Position = UDim2.new(0, 230, 0, 55)
 petScroll.BackgroundTransparency = 0.9
-petScroll.BackgroundColor3
+petScroll.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+petScroll.CanvasSize = UDim2.new(0, 0, 0, #GAG2_Pets * 35)
+petScroll.ScrollBarThickness = 4
+petScroll.Parent = main
+
+local petLayout = Instance.new("UIListLayout", petScroll)
+petLayout.Padding = UDim.new(0, 5)
+
+-- Populate Seeds
+for _, sName in ipairs(GAG2_Seeds) do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -10, 0, 30)
+	btn.BackgroundColor3 = Color3.fromRGB(60, 130, 70)
+	btn.Text = sName
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Font = Enum.Font.SourceSans
+	btn.TextSize = 14
+	btn.Parent = seedScroll
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+	
+	btn.MouseButton1Click:Connect(function() 
+		print("Selected Seed: " .. sName)
+	end)
+end
+
+-- Populate Pets
+for _, pName in ipairs(GAG2_Pets) do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -10, 0, 30)
+	btn.BackgroundColor3 = Color3.fromRGB(60, 100, 160)
+	btn.Text = pName
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Font = Enum.Font.SourceSans
+	btn.TextSize = 14
+	btn.Parent = petScroll
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+	
+	btn.MouseButton1Click:Connect(function() 
+		print("Selected Pet: " .. pName)
+	end)
+end
+
+print("--- GUARANTEED HUB LOADED ---")
