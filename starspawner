@@ -1,7 +1,6 @@
-print("--- LOADING GARDEN MENU SCRIPT ---")
+print("--- LOADING REAL GAG2 SCRIPT HUB ---")
 
 local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
@@ -9,158 +8,188 @@ local localPlayer = Players.LocalPlayer
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
 local rootPart = character:WaitForChild("HumanoidRootPart")
 
+-- Fallback to PlayerGui so it works in both Studio and Executors safely
+local targetGui = localPlayer:WaitForChild("PlayerGui")
+
 ----------------------------------------------------------------
--- OPTIONAL: SETUP TEMPLATES IF THEY DON'T EXIST IN THE GAME
+-- GAG2 DATA ARRAYS
 ----------------------------------------------------------------
-local function createTemplate(name, color, shape)
-    local template = ReplicatedStorage:FindFirstChild(name)
-    if not template then
-        template = Instance.new("Model")
-        template.Name = name
-        local part = Instance.new("Part")
-        part.Name = "PrimaryPart"
-        part.Size = Vector3.new(2, 2, 2)
-        part.Shape = shape or Enum.PartType.Block
-        part.BrickColor = BrickColor.new(color)
-        part.Parent = template
-        template.PrimaryPart = part
-        template.Parent = ReplicatedStorage
-    end
-    return template
+local GAG2_Seeds = {
+	-- S Tier
+	"Moon Bloom", "Mushroom", "Ghost Pepper", "Venom Spitter", "Dragon's Breath", "Venus Fly Trap", "Poison Apple",
+	-- A Tier
+	"Sunflower", "Poison Ivy", "Pomegranate", "Bamboo",
+	-- B Tier
+	"Glow Mushroom", "Cherry", "Horned Melon", "Acorn", "Dragon Fruit",
+	-- C Tier
+	"Mango", "Tulip", "Baby Cactus", "Cactus", "Corn", "Banana", "Grape",
+	-- D Tier
+	"Tomato", "Strawberry", "Blueberry", "Carrot", "Green Bean", "Pineapple", "Apple"
+}
+
+local GAG2_Pets = {
+	"Ice Serpent", "Raccoon", "Black Dragon", "Golden Dragonfly", "Unicorn", "Monkey", "Bear", "Bee", "Robin", "Deer", "Owl", "Bunny", "Frog"
+}
+
+----------------------------------------------------------------
+-- HELPERS & GAME SPAWNING OBJECT CREATION
+----------------------------------------------------------------
+local function checkAndCreateTemplate(name, color)
+	local t = ReplicatedStorage:FindFirstChild(name)
+	if not t then
+		t = Instance.new("Model")
+		t.Name = name
+		local p = Instance.new("Part")
+		p.Name = "PrimaryPart"
+		p.Size = Vector3.new(2, 2, 2)
+		p.BrickColor = BrickColor.new(color)
+		p.Parent = t
+		t.PrimaryPart = p
+		t.Parent = ReplicatedStorage
+	end
+	return t
 end
 
-local appleSeed = createTemplate("AppleSeed", "Bright red", Enum.PartType.Ball)
-local carrotSeed = createTemplate("CarrotSeed", "Deep orange", Enum.PartType.Cylinder)
-local melonSeed = createTemplate("MelonSeed", "Dark green", Enum.PartType.Ball)
-local petTemplate = createTemplate("GardenPet", "Bright blue", Enum.PartType.Block)
-
-----------------------------------------------------------------
--- SPAWN FUNCTIONS
-----------------------------------------------------------------
-local function spawnSeedNearPlayer(seedName)
-    local template = ReplicatedStorage:FindFirstChild(seedName)
-    if template then
-        local newSeed = template:Clone()
-        newSeed.Name = "Spawned_" .. seedName
-        
-        -- Spawn 5 studs in front of the player
-        local spawnPos = rootPart.Position + (rootPart.CFrame.LookVector * 5) + Vector3.new(0, 1, 0)
-        newSeed:PivotTo(CFrame.new(spawnPos))
-        newSeed.Parent = Workspace
-        
-        -- Basic pickup logic
-        newSeed.PrimaryPart.Touched:Connect(function(otherPart)
-            if Players:GetPlayerFromCharacter(otherPart.Parent) == localPlayer then
-                newSeed:Destroy()
-            end
-        end)
-    end
+local function spawnSeed(name)
+	checkAndCreateTemplate(name, "Bright orange")
+	local t = ReplicatedStorage:FindFirstChild(name)
+	if t then
+		local clone = t:Clone()
+		clone.Name = "Spawned_" .. name
+		clone:PivotTo(rootPart.CFrame * CFrame.new(0, 0, -5))
+		clone.Parent = Workspace
+		
+		clone.PrimaryPart.Touched:Connect(function(hit)
+			if Players:GetPlayerFromCharacter(hit.Parent) == localPlayer then clone:Destroy() end
+		end)
+	end
 end
 
-local function spawnPet()
-    if character:FindFirstChild(localPlayer.Name .. "_MenuPet") then return end
-    
-    local newPet = petTemplate:Clone()
-    newPet.Name = localPlayer.Name .. "_MenuPet"
-    local petRoot = newPet.PrimaryPart
-    petRoot.CanCollide = false
-    petRoot.Anchored = false
-    newPet:PivotTo(rootPart.CFrame * CFrame.new(0, 5, 0))
-    newPet.Parent = character
-    
-    local petAttachment = Instance.new("Attachment", petRoot)
-    local playerAttachment = Instance.new("Attachment", rootPart)
-    playerAttachment.Position = Vector3.new(2, 3, 2)
-    
-    local alignPos = Instance.new("AlignPosition", petRoot)
-    alignPos.MaxForce = 25000
-    alignPos.Responsiveness = 15
-    alignPos.Attachment0 = petAttachment
-    alignPos.Attachment1 = playerAttachment
-    
-    local alignOrient = Instance.new("AlignOrientation", petRoot)
-    alignOrient.MaxTorque = 25000
-    alignOrient.Responsiveness = 15
-    alignOrient.Attachment0 = petAttachment
-    alignOrient.Attachment1 = playerAttachment
+local function spawnPet(name)
+	if character:FindFirstChild(localPlayer.Name .. "_" .. name) then return end
+	checkAndCreateTemplate(name, "Bright blue")
+	local t = ReplicatedStorage:FindFirstChild(name)
+	if t then
+		local clone = t:Clone()
+		clone.Name = localPlayer.Name .. "_" .. name
+		local pRoot = clone.PrimaryPart
+		pRoot.CanCollide = false
+		pRoot.Anchored = false
+		clone:PivotTo(rootPart.CFrame * CFrame.new(2, 3, 2))
+		clone.Parent = character
+		
+		local a0 = Instance.new("Attachment", pRoot)
+		local a1 = Instance.new("Attachment", rootPart)
+		a1.Position = Vector3.new(-3, 3, 3)
+		
+		local ap = Instance.new("AlignPosition", pRoot)
+		ap.MaxForce = 30000; ap.Responsiveness = 15
+		ap.Attachment0 = a0; ap.Attachment1 = a1
+		
+		local ao = Instance.new("AlignOrientation", pRoot)
+		ao.MaxTorque = 30000; ao.Responsiveness = 15
+		ao.Attachment0 = a0; ao.Attachment1 = a1
+	end
 end
 
 ----------------------------------------------------------------
--- GUI CREATION
+-- MODERN INTERFACE UI CREATION
 ----------------------------------------------------------------
--- Remove existing menu if it was run before
-if CoreGui:FindFirstChild("GardenMenuGui") then
-    CoreGui.GardenMenuGui:Destroy()
-end
+if targetGui:FindFirstChild("GaG2_Hub") then targetGui.GaG2_Hub:Destroy() end
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "GardenMenuGui"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = CoreGui
+local sg = Instance.new("ScreenGui")
+sg.Name = "GaG2_Hub"
+sg.ResetOnSpawn = false
+sg.Parent = targetGui
 
--- Main Frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 250, 0, 320)
-mainFrame.Position = UDim2.new(0.5, -125, 0.5, -160)
-mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-mainFrame.BorderSizePixel = 0
-mainFrame.Active = true
-mainFrame.Draggable = true -- Allows you to move the menu around your screen
-mainFrame.Parent = screenGui
-
-local uiCorner = Instance.new("UICorner", mainFrame)
-uiCorner.CornerRadius = UDim.new(0, 10)
+-- Main Panel
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 500, 0, 350)
+main.Position = UDim2.new(0.5, -250, 0.5, -175)
+main.BackgroundColor3 = Color3.fromRGB(30, 30, 32)
+main.BorderSizePixel = 0
+main.Active = true
+main.Draggable = true
+main.Parent = sg
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
 
 -- Title
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, 0, 0, 40)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "Garden Spawner Menu"
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 18
-titleLabel.Font = Enum.Font.SourceSansBold
-titleLabel.Parent = mainFrame
-
--- Helper function to make buttons quickly
-local function createMenuButton(text, position, color, callback)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 210, 0, 40)
-    button.Position = position
-    button.BackgroundColor3 = color
-    button.Text = text
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.TextSize = 16
-    button.Font = Enum.Font.SourceSansBold
-    button.BorderSizePixel = 0
-    button.Parent = mainFrame
-    
-    local btnCorner = Instance.new("UICorner", button)
-    btnCorner.CornerRadius = UDim.new(0, 6)
-    
-    button.MouseButton1Click:Connect(callback)
-end
-
--- Create the Spawner Buttons
-createMenuButton("Spawn Apple Seed", UDim2.new(0, 20, 0, 60), Color3.fromRGB(215, 60, 60), function()
-    spawnSeedNearPlayer("AppleSeed")
-end)
-
-createMenuButton("Spawn Carrot Seed", UDim2.new(0, 20, 0, 110), Color3.fromRGB(230, 125, 35), function()
-    spawnSeedNearPlayer("CarrotSeed")
-end)
-
-createMenuButton("Spawn Melon Seed", UDim2.new(0, 20, 0, 160), Color3.fromRGB(45, 140, 75), function()
-    spawnSeedNearPlayer("MelonSeed")
-end)
-
-createMenuButton("Spawn Companion Pet", UDim2.new(0, 20, 0, 210), Color3.fromRGB(50, 115, 220), function()
-    spawnPet()
-end)
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 45)
+title.BackgroundTransparency = 1
+title.Text = "Grow a Garden 2 - Spawner Menu"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 18
+title.Font = Enum.Font.SourceSansBold
+title.Parent = main
 
 -- Close Button
-createMenuButton("Close Menu", UDim2.new(0, 20, 0, 265), Color3.fromRGB(80, 80, 80), function()
-    screenGui:Destroy()
-end)
+local close = Instance.new("TextButton")
+close.Size = UDim2.new(0, 30, 0, 30)
+close.Position = UDim2.new(1, -40, 0, 8)
+close.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+close.Text = "X"
+close.TextColor3 = Color3.fromRGB(255, 255, 255)
+close.Font = Enum.Font.SourceSansBold
+close.TextSize = 14
+close.Parent = main
+Instance.new("UICorner", close).CornerRadius = UDim.new(0, 6)
+close.MouseButton1Click:Connect(function() sg:Destroy() end)
 
-print("--- MENU LOADED SUCCESSFULLY ---")
+-- Scrolling Frame for Seeds
+local seedScroll = Instance.new("ScrollingFrame")
+seedScroll.Size = UDim2.new(0, 230, 0, 280)
+seedScroll.Position = UDim2.new(0, 15, 0, 55)
+seedScroll.BackgroundTransparency = 0.9
+seedScroll.BackgroundColor3 = Color3.fromRGB(0,0,0)
+seedScroll.CanvasSize = UDim2.new(0, 0, 0, #GAG2_Seeds * 35)
+seedScroll.ScrollBarThickness = 6
+seedScroll.Parent = main
+
+local seedLayout = Instance.new("UIListLayout", seedScroll)
+seedLayout.Padding = UDim.new(0, 5)
+
+-- Scrolling Frame for Pets
+local petScroll = Instance.new("ScrollingFrame")
+petScroll.Size = UDim2.new(0, 230, 0, 280)
+petScroll.Position = UDim2.new(0, 255, 0, 55)
+petScroll.BackgroundTransparency = 0.9
+petScroll.BackgroundColor3 = Color3.fromRGB(0,0,0)
+petScroll.CanvasSize = UDim2.new(0, 0, 0, #GAG2_Pets * 35)
+petScroll.ScrollBarThickness = 6
+petScroll.Parent = main
+
+local petLayout = Instance.new("UIListLayout", petScroll)
+petLayout.Padding = UDim.new(0, 5)
+
+-- Populate Seeds
+for _, sName in ipairs(GAG2_Seeds) do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -10, 0, 30)
+	btn.BackgroundColor3 = Color3.fromRGB(50, 120, 60)
+	btn.Text = "Spawn " .. sName
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Font = Enum.Font.SourceSans
+	btn.TextSize = 14
+	btn.Parent = seedScroll
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+	
+	btn.MouseButton1Click:Connect(function() spawnSeed(sName) end)
+end
+
+-- Populate Pets
+for _, pName in ipairs(GAG2_Pets) do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -10, 0, 30)
+	btn.BackgroundColor3 = Color3.fromRGB(50, 90, 150)
+	btn.Text = "Get " .. pName
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Font = Enum.Font.SourceSans
+	btn.TextSize = 14
+	btn.Parent = petScroll
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+	
+	btn.MouseButton1Click:Connect(function() spawnPet(pName) end)
+end
+
+print("--- HUB LOADED AND READY ---")
