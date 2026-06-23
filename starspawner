@@ -1,11 +1,15 @@
-print("--- LOADING MIRRORED GAG2 SCRIPT HUB ---")
-
+-- DESTROY EXISTING UI STORAGE TO FORCE REFRESH
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 local targetGui = localPlayer:WaitForChild("PlayerGui")
 
+if targetGui:FindFirstChild("GaG2_Hub") then 
+	targetGui.GaG2_Hub:Destroy() 
+end
+task.wait(0.05)
+
 ----------------------------------------------------------------
--- DATA MANIFEST (MATCHING ORIGINAL INDEX)
+-- DATA CONFIGURATION
 ----------------------------------------------------------------
 local GAG2_Seeds = {
 	"Moon Bloom", "Mushroom", "Ghost Pepper", "Venom Spitter", "Dragon's Breath", "Venus Fly Trap", "Poison Apple",
@@ -19,18 +23,14 @@ local GAG2_Pets = {
 }
 
 ----------------------------------------------------------------
--- EXACT UI RECONSTRUCTION
+-- UI FRAMEWORK
 ----------------------------------------------------------------
-if targetGui:FindFirstChild("GaG2_Hub") then 
-	targetGui.GaG2_Hub:Destroy() 
-end
-
 local sg = Instance.new("ScreenGui")
 sg.Name = "GaG2_Hub"
 sg.ResetOnSpawn = false
 sg.Parent = targetGui
 
--- Base Frame
+-- Main Menu Window Frame
 local main = Instance.new("Frame")
 main.Size = UDim2.new(0, 450, 0, 320)
 main.Position = UDim2.new(0.5, -225, 0.5, -160)
@@ -44,13 +44,12 @@ main.Parent = sg
 local mainCorner = Instance.new("UICorner", main)
 mainCorner.CornerRadius = UDim.new(0, 10)
 
--- Flat Alignment Stroke
 local mainStroke = Instance.new("UIStroke", main)
 mainStroke.Thickness = 1
 mainStroke.Color = Color3.fromRGB(60, 60, 65)
 mainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
--- Fixed Top-Right Toggle Controller
+-- Green Rectangular "OPEN" Button Pinned Top Right
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0, 80, 0, 35)
 toggleBtn.Position = UDim2.new(1, -100, 0, 50) 
@@ -69,7 +68,7 @@ toggleBtn.MouseButton1Click:Connect(function()
 	main.Visible = not main.Visible
 end)
 
--- Main Banner Title
+-- Title Header
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 45)
 title.BackgroundTransparency = 1
@@ -79,7 +78,7 @@ title.TextSize = 16
 title.Font = Enum.Font.SourceSansBold
 title.Parent = main
 
--- Collapse Panel Trigger
+-- Minimalist Drop Minimize Button
 local close = Instance.new("TextButton")
 close.Size = UDim2.new(0, 30, 0, 30)
 close.Position = UDim2.new(1, -40, 0, 8)
@@ -97,7 +96,7 @@ close.MouseButton1Click:Connect(function()
 	main.Visible = false 
 end)
 
--- Left Column: Seeds
+-- Left Panel: Seeds List
 local seedScroll = Instance.new("ScrollingFrame")
 seedScroll.Size = UDim2.new(0, 200, 0, 250)
 seedScroll.Position = UDim2.new(0, 15, 0, 55)
@@ -111,7 +110,7 @@ seedScroll.Parent = main
 local seedLayout = Instance.new("UIListLayout", seedScroll)
 seedLayout.Padding = UDim.new(0, 5)
 
--- Right Column: Pets
+-- Right Panel: Pets List
 local petScroll = Instance.new("ScrollingFrame")
 petScroll.Size = UDim2.new(0, 200, 0, 250)
 petScroll.Position = UDim2.new(0, 230, 0, 55)
@@ -125,7 +124,7 @@ petScroll.Parent = main
 local petLayout = Instance.new("UIListLayout", petScroll)
 petLayout.Padding = UDim.new(0, 5)
 
--- Item Selection Element Builder
+-- Custom Button Construction Function
 local function createMenuButton(name, parentFrame, bgColor)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, -10, 0, 30)
@@ -143,19 +142,19 @@ local function createMenuButton(name, parentFrame, bgColor)
 	return btn
 end
 
--- Generate Elements
+-- Generate Clean Lists
 for _, sName in ipairs(GAG2_Seeds) do
 	local seedBtn = createMenuButton(sName, seedScroll, Color3.fromRGB(60, 130, 70))
 	seedBtn.MouseButton1Click:Connect(function() 
-		print("Selected Target Seed: " .. sName)
+		print("Selected Seed: " .. sName)
 	end)
 end
 
 for _, pName in ipairs(GAG2_Pets) do
 	local petBtn = createMenuButton(pName, petScroll, Color3.fromRGB(60, 100, 160))
 	petBtn.MouseButton1Click:Connect(function() 
-		print("Selected Target Pet: " .. pName)
+		print("Selected Pet: " .. pName)
 	end)
 end
 
-print("--- EXPLICIT MIRROR COMPLETED ---")
+print("--- EXECUTED DIRECTLY FROM LOCAL MEMORY ---")
