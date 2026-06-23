@@ -1,12 +1,10 @@
-print("--- LOADING REAL GAG2 SCRIPT HUB ---")
+print("--- LOADING GAG2 INVENTORY SCRIPT HUB ---")
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
 
 local localPlayer = Players.LocalPlayer
-local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
-local rootPart = character:WaitForChild("HumanoidRootPart")
+local backpack = localPlayer:WaitForChild("Backpack")
 
 -- Fallback to PlayerGui so it works in both Studio and Executors safely
 local targetGui = localPlayer:WaitForChild("PlayerGui")
@@ -32,64 +30,32 @@ local GAG2_Pets = {
 }
 
 ----------------------------------------------------------------
--- HELPERS & GAME SPAWNING OBJECT CREATION
+-- INVENTORY ITEM GENERATION (Spawns items directly as tools)
 ----------------------------------------------------------------
-local function checkAndCreateTemplate(name, color)
-	local t = ReplicatedStorage:FindFirstChild(name)
-	if not t then
-		t = Instance.new("Model")
-		t.Name = name
-		local p = Instance.new("Part")
-		p.Name = "PrimaryPart"
-		p.Size = Vector3.new(2, 2, 2)
-		p.BrickColor = BrickColor.new(color)
-		p.Parent = t
-		t.PrimaryPart = p
-		t.Parent = ReplicatedStorage
+local function giveToolToInventory(itemName, color, isPet)
+	-- Create the Tool Container
+	local newTool = Instance.new("Tool")
+	newTool.Name = itemName
+	newTool.RequiresHandle = true
+	
+	-- Create the physical handle inside the tool so it can be held
+	local handle = Instance.new("Part")
+	handle.Name = "Handle"
+	handle.Size = Vector3.new(1, 1, 1)
+	handle.BrickColor = BrickColor.new(color)
+	handle.Material = Enum.Material.Plastic
+	handle.Parent = newTool
+	
+	-- Add a special tag if it's a pet, just to distinguish it
+	if isPet then
+		local petTag = Instance.new("StringValue")
+		petTag.Name = "IsPet"
+		petTag.Value = "True"
+		petTag.Parent = newTool
 	end
-	return t
-end
-
-local function spawnSeed(name)
-	checkAndCreateTemplate(name, "Bright orange")
-	local t = ReplicatedStorage:FindFirstChild(name)
-	if t then
-		local clone = t:Clone()
-		clone.Name = "Spawned_" .. name
-		clone:PivotTo(rootPart.CFrame * CFrame.new(0, 0, -5))
-		clone.Parent = Workspace
-		
-		clone.PrimaryPart.Touched:Connect(function(hit)
-			if Players:GetPlayerFromCharacter(hit.Parent) == localPlayer then clone:Destroy() end
-		end)
-	end
-end
-
-local function spawnPet(name)
-	if character:FindFirstChild(localPlayer.Name .. "_" .. name) then return end
-	checkAndCreateTemplate(name, "Bright blue")
-	local t = ReplicatedStorage:FindFirstChild(name)
-	if t then
-		local clone = t:Clone()
-		clone.Name = localPlayer.Name .. "_" .. name
-		local pRoot = clone.PrimaryPart
-		pRoot.CanCollide = false
-		pRoot.Anchored = false
-		clone:PivotTo(rootPart.CFrame * CFrame.new(2, 3, 2))
-		clone.Parent = character
-		
-		local a0 = Instance.new("Attachment", pRoot)
-		local a1 = Instance.new("Attachment", rootPart)
-		a1.Position = Vector3.new(-3, 3, 3)
-		
-		local ap = Instance.new("AlignPosition", pRoot)
-		ap.MaxForce = 30000; ap.Responsiveness = 15
-		ap.Attachment0 = a0; ap.Attachment1 = a1
-		
-		local ao = Instance.new("AlignOrientation", pRoot)
-		ao.MaxTorque = 30000; ao.Responsiveness = 15
-		ao.Attachment0 = a0; ao.Attachment1 = a1
-	end
+	
+	-- Place the tool directly inside the player's Backpack (Inventory)
+	newTool.Parent = backpack
 end
 
 ----------------------------------------------------------------
@@ -117,7 +83,7 @@ Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 45)
 title.BackgroundTransparency = 1
-title.Text = "Grow a Garden 2 - Spawner Menu"
+title.Text = "Grow a Garden 2 - Inventory Spawner"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextSize = 18
 title.Font = Enum.Font.SourceSansBold
@@ -167,14 +133,16 @@ for _, sName in ipairs(GAG2_Seeds) do
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, -10, 0, 30)
 	btn.BackgroundColor3 = Color3.fromRGB(50, 120, 60)
-	btn.Text = "Spawn " .. sName
+	btn.Text = "+ " .. sName .. " Seed"
 	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	btn.Font = Enum.Font.SourceSans
 	btn.TextSize = 14
 	btn.Parent = seedScroll
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
 	
-	btn.MouseButton1Click:Connect(function() spawnSeed(sName) end)
+	btn.MouseButton1Click:Connect(function() 
+		giveToolToInventory(sName .. " Seed", "Bright orange", false) 
+	end)
 end
 
 -- Populate Pets
@@ -182,14 +150,16 @@ for _, pName in ipairs(GAG2_Pets) do
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, -10, 0, 30)
 	btn.BackgroundColor3 = Color3.fromRGB(50, 90, 150)
-	btn.Text = "Get " .. pName
+	btn.Text = "+ " .. pName
 	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	btn.Font = Enum.Font.SourceSans
 	btn.TextSize = 14
 	btn.Parent = petScroll
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
 	
-	btn.MouseButton1Click:Connect(function() spawnPet(pName) end)
+	btn.MouseButton1Click:Connect(function() 
+		giveToolToInventory(pName, "Bright blue", true) 
+	end)
 end
 
-print("--- HUB LOADED AND READY ---")
+print("--- INVENTORY SPAWNER HUB READY ---")
