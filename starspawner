@@ -1,14 +1,11 @@
-print("--- LOADING GAG2 MENU SCRIPT ---")
+print("--- LOADING FIXED GAG2 MENU ---")
 
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local localPlayer = Players.LocalPlayer
-local backpack = localPlayer:WaitForChild("Backpack")
 local targetGui = localPlayer:WaitForChild("PlayerGui")
 
 ----------------------------------------------------------------
--- GAG2 DATA MANIFEST
+-- GAG2 DATA LISTS
 ----------------------------------------------------------------
 local GAG2_Seeds = {
 	"Moon Bloom", "Mushroom", "Ghost Pepper", "Venom Spitter", "Dragon's Breath", "Venus Fly Trap", "Poison Apple",
@@ -22,36 +19,12 @@ local GAG2_Pets = {
 }
 
 ----------------------------------------------------------------
--- INVENTORY LOGIC
-----------------------------------------------------------------
-local function giveRealGameItem(itemName)
-	-- Searches ReplicatedStorage or alternative storage spaces for the official Tool
-	local realTool = ReplicatedStorage:FindFirstChild(itemName, true) or game:GetService("Lighting"):FindFirstChild(itemName, true)
-	
-	if realTool and realTool:IsA("Tool") then
-		local clone = realTool:Clone()
-		clone.Parent = backpack
-	else
-		-- Secondary check for nested folders matching variations of the name
-		local found = false
-		for _, desc in ipairs(ReplicatedStorage:GetDescendants()) do
-			if desc:IsA("Tool") and (desc.Name:lower() == itemName:lower() or desc.Name:lower() == (itemName:lower() .. " seed")) then
-				local clone = desc:Clone()
-				clone.Parent = backpack
-				found = true
-				break
-			end
-		end
-		if not found then
-			warn("Official game asset not found in storage for: " .. itemName)
-		end
-	end
-end
-
-----------------------------------------------------------------
 -- INTERFACE UI CREATION
 ----------------------------------------------------------------
-if targetGui:FindFirstChild("GaG2_Hub") then targetGui.GaG2_Hub:Destroy() end
+-- Clean up any old menus to prevent overlapping
+if targetGui:FindFirstChild("GaG2_Hub") then 
+	targetGui.GaG2_Hub:Destroy() 
+end
 
 local sg = Instance.new("ScreenGui")
 sg.Name = "GaG2_Hub"
@@ -66,7 +39,7 @@ main.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
 main.BorderSizePixel = 0
 main.Active = true
 main.Draggable = true
-main.Visible = true
+main.Visible = true -- Starts open
 main.Parent = sg
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
 
@@ -75,13 +48,14 @@ local logoBtn = Instance.new("ImageButton")
 logoBtn.Size = UDim2.new(0, 60, 0, 60)
 logoBtn.Position = UDim2.new(0, 15, 0, 15)
 logoBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 48)
--- Replace the string below with your desired Roblox Asset ID image link
-logoBtn.Image = "rbxassetid://0" 
+-- You can replace this Asset ID with any Roblox image icon you like
+logoBtn.Image = "rbxassetid://6034287515" 
 logoBtn.Parent = sg
 
 local logoCorner = Instance.new("UICorner", logoBtn)
-logoCorner.CornerRadius = UDim.new(1, 0) -- Makes the button a perfect circle
+logoCorner.CornerRadius = UDim.new(1, 0) -- Makes it a circle
 
+-- Smooth toggle functionality
 logoBtn.MouseButton1Click:Connect(function()
 	main.Visible = not main.Visible
 end)
@@ -107,7 +81,9 @@ close.Font = Enum.Font.SourceSansBold
 close.TextSize = 14
 close.Parent = main
 Instance.new("UICorner", close).CornerRadius = UDim.new(0, 6)
-close.MouseButton1Click:Connect(function() main.Visible = false end)
+close.MouseButton1Click:Connect(function() 
+	main.Visible = false 
+end)
 
 -- Scrolling Frame for Seeds
 local seedScroll = Instance.new("ScrollingFrame")
@@ -127,46 +103,4 @@ local petScroll = Instance.new("ScrollingFrame")
 petScroll.Size = UDim2.new(0, 200, 0, 250)
 petScroll.Position = UDim2.new(0, 230, 0, 55)
 petScroll.BackgroundTransparency = 0.9
-petScroll.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-petScroll.CanvasSize = UDim2.new(0, 0, 0, #GAG2_Pets * 35)
-petScroll.ScrollBarThickness = 4
-petScroll.Parent = main
-
-local petLayout = Instance.new("UIListLayout", petScroll)
-petLayout.Padding = UDim.new(0, 5)
-
--- Populate Seeds
-for _, sName in ipairs(GAG2_Seeds) do
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(1, -10, 0, 30)
-	btn.BackgroundColor3 = Color3.fromRGB(60, 130, 70)
-	btn.Text = sName
-	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	btn.Font = Enum.Font.SourceSans
-	btn.TextSize = 14
-	btn.Parent = seedScroll
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-	
-	btn.MouseButton1Click:Connect(function() 
-		giveRealGameItem(sName) 
-	end)
-end
-
--- Populate Pets
-for _, pName in ipairs(GAG2_Pets) do
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(1, -10, 0, 30)
-	btn.BackgroundColor3 = Color3.fromRGB(60, 100, 160)
-	btn.Text = pName
-	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	btn.Font = Enum.Font.SourceSans
-	btn.TextSize = 14
-	btn.Parent = petScroll
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-	
-	btn.MouseButton1Click:Connect(function() 
-		giveRealGameItem(pName) 
-	end)
-end
-
-print("--- HUB LOADED ---")
+petScroll.BackgroundColor3
